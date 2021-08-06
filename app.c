@@ -1,8 +1,9 @@
 #include <stdio.h>
+#include <unistd.h>
 #include <string.h>
 
 // macros
-#define MAX_LIMIT 255
+#define MAX_LIMIT 101
 #define ENTER 13
 #define TAB 9
 #define BKSP 8
@@ -33,13 +34,12 @@ void Login(){
 
 void SignUp(){
     clearScreen();
-    char user[MAX_LIMIT], pass[MAX_LIMIT], passConf[MAX_LIMIT];
-    printf("Username : ");
+    char user[MAX_LIMIT]; char *pass, *passConf;
+    puts(" == Sign In == ");
+    printf("Enter a Username : ");
     scanf("%s",user); clearBuff();
-    printf("Password : ");
-    scanf("%s",pass); clearBuff();
-    printf("Re-enter Password : ");
-    scanf("%s",passConf); clearBuff();
+    pass = getpass("Enter a Password : ");
+    passConf = getpass("Re-enter Password : ");
     // checkUser();
     if(!checkPass(pass,passConf)){
         puts("Password not match !!!");
@@ -57,6 +57,7 @@ void menuOption(short unsigned choice){
             SignUp();
             break;
         default:
+            clearScreen();
             puts("Invalid Input !!!");
             puts("Press enter to continue..");
             clearBuff(); Menu();
