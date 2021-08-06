@@ -34,15 +34,17 @@ void Login(){
 
 void SignUp(){
     clearScreen();
-    char user[MAX_LIMIT]; char *pass, *passConf;
+    char user[MAX_LIMIT], pass[MAX_LIMIT], passConf[MAX_LIMIT];
     puts(" == Sign In == ");
     printf("Enter a Username : ");
     scanf("%s",user); clearBuff();
-    pass = getpass("Enter a Password : ");
-    passConf = getpass("Re-enter Password : ");
-    // checkUser();
+    char *ptr = getpass("Enter a Password : ");
+    strcpy(pass,ptr);
+    ptr = getpass("Re-enter a password : ");
+    strcpy(passConf,ptr);
+    // checkUser(user);
     if(!checkPass(pass,passConf)){
-        puts("Password not match !!!");
+        puts("Password didnt match!!");
         puts("Press enter to continue...");
         clearBuff(); SignUp();
     }
