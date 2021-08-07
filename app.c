@@ -1,24 +1,28 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
-
-// MACROS & GLOBAL VAR
+#include <stdlib.h>
 #define MAX_LIMIT 101
-char* U_PATH = "data/user.txt";
 
-// PROTO
-void Menu();
-void SignUp();
-void Login();
-
+// STRUCT USER
 typedef struct user {
     char username[MAX_LIMIT];
     char password[MAX_LIMIT];
     long long balance;
 } User;
 
+// GLOBAL VAR
+char* U_PATH = "data/user.bin";
+User* Users = NULL;
+
+// PROTO
+void Menu();
+void SignUp();
+void Login();
+
+
 /* ======= UTILITY FUNCTION ======= */
-void clearScreen(){printf("\e[1;1H\e[2J");}
+void clearScreen(){printf("\e[1;1H\e[2J");} // regex
 
 void clearBuff(){
     int c;
@@ -36,13 +40,36 @@ int fExist(char* fname){
 /* =============================== */
 
 /* ========= LOGIN =========== */
+
+User* isValid(char* user){
+    User users;
+    FILE* fp = fopen(U_PATH,"r");
+    while(fread(&users,sizeof(User),1,fp)){
+        if(!strcmp(users.username,user)) {
+            User* ptr = (User*)malloc(sizeof(User));
+            strcpy(ptr->username,users.username);
+            strcpy(ptr->password,users.password);
+            ptr->balance = users.balance;
+            return ptr;
+        }
+    }
+    return NULL;
+}
+
 void Login(){
     clearScreen();
     char user[MAX_LIMIT], pass[MAX_LIMIT];
+    puts(" == Login == ");
     printf("Username : ");
     scanf("%s",user); clearBuff();
     printf("Password : ");
     scanf("%s",pass); clearBuff();
+    Users = isValid(user);
+    char* hashPass = crypt(pass,"00");
+    if(Users){
+        if(!strcmp(Users->password,hashPass)) printf("Login successfull..");
+        else printf("Password salah\n");
+    }
 }
 /* =========================== */
 
