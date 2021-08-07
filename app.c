@@ -67,8 +67,16 @@ void Login(){
     Users = isValid(user);
     char* hashPass = crypt(pass,"00");
     if(Users){
-        if(!strcmp(Users->password,hashPass)) printf("Login successfull..");
-        else printf("Password salah\n");
+        if(!strcmp(Users->password,hashPass)){
+            puts("Login successfull..");
+            puts("Press enter to continue...");
+            clearBuff();
+        }
+        else{
+            puts("Username / password incorrect\n");
+            puts("Press enter to continue...");
+            clearBuff(); Login();
+        }
     }
 }
 /* =========================== */
@@ -175,6 +183,7 @@ void menuOption(short unsigned choice){
         case 3:
             readData(U_PATH);
             break;
+        case 0:
         default:
             clearScreen();
             puts("Invalid Input !!!");
@@ -184,15 +193,31 @@ void menuOption(short unsigned choice){
     }
 }
 
+void atmMenu(){
+    puts("Welcome to pubji mobile");
+    clearBuff();
+}
+
+int isLogin(){
+    if(Users) return 1;
+    return 0;
+}
+
 void Menu(){
     short unsigned menuChoice;
-    puts("ATM MACHINE");
-    puts("1. login");
-    puts("2. SignUp");
-    puts("Enter the number : ");
-    scanf("%hu",&menuChoice);
-    clearBuff();
-    menuOption(menuChoice);
+    while(1){
+        clearScreen();
+        puts("ATM MACHINE");
+        puts("1. login");
+        puts("2. SignUp");
+        puts("0. Exit");
+        puts("Enter the number : ");
+        scanf("%hu",&menuChoice);
+        if(!menuChoice) break;
+        clearBuff();
+        menuOption(menuChoice);
+        if(isLogin()) atmMenu();
+    }
 }
 
 int main() {
