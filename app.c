@@ -36,6 +36,13 @@ int fExist(char* fname){
     }
     else return 0;
 }
+
+void delay(){ for (int i=0; i<1.5e8; i++){} }
+
+int isLogin(){
+    if(Users) return 1;
+    return 0;
+}
 /* =============================== */
 
 /* ========= LOGIN =========== */
@@ -170,6 +177,12 @@ void SignUp(){
 }
 /* ======================== */
 
+/* ===== MENU FUNCTION ===== */
+void atmMenu(){
+    puts("Welcome to pubji mobile");
+    clearBuff();
+}
+
 void menuOption(short unsigned choice){
     switch(choice){
         case 1:
@@ -189,20 +202,6 @@ void menuOption(short unsigned choice){
             clearBuff(); Menu();
             break;
     }
-}
-
-void atmMenu(){
-    puts("Welcome to pubji mobile");
-    clearBuff();
-}
-
-int isLogin(){
-    if(Users) return 1;
-    return 0;
-}
-
-void delay(){
-    for (int i=0; i<1.5e8; i++) {;}
 }
 
 void printASCII() {
@@ -238,6 +237,7 @@ void Menu(){
         if(isLogin()) atmMenu();
     }
 }
+/* ==================== */
 
 int main() {
     Menu();
