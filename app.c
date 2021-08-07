@@ -17,6 +17,7 @@ typedef struct user {
     long long balance;
 } User;
 
+/* ======= UTILITY FUNCTION ======= */
 void clearScreen(){printf("\e[1;1H\e[2J");}
 
 void clearBuff(){
@@ -32,12 +33,9 @@ int fExist(char* fname){
     }
     else return 0;
 }
+/* =============================== */
 
-short unsigned checkPass(char pass[],char passConf[]){
-    if(!strcmp(pass,passConf)) return 1;
-    else return 0;
-}
-
+/* ========= LOGIN =========== */
 void Login(){
     clearScreen();
     char user[MAX_LIMIT], pass[MAX_LIMIT];
@@ -46,6 +44,7 @@ void Login(){
     printf("Password : ");
     scanf("%s",pass); clearBuff();
 }
+/* =========================== */
 
 // debug
 void readData(char* fname){
@@ -59,7 +58,9 @@ void readData(char* fname){
     else printf("File doesnt exist..");
 }
 
+/* ===== SIGN UP FUNCTION ======= */
 int checkUser(char* userN,int userNLen){
+    if(userNLen > 18) return 3;
     for(int i = 0; i < userNLen; i++){
         if((userN[i] >= 'A' && userN[i] <= 'Z') ||
            (userN[i] >= 'a' && userN[i] <= 'z') ||
@@ -70,9 +71,7 @@ int checkUser(char* userN,int userNLen){
     FILE* fp;
     if(fp = fopen(U_PATH,"r")){
         while(fread(&users,sizeof(User),1,fp)){
-            if(strcmp(userN,users.username) == 0){
-                return 0;
-            }
+            if(strcmp(userN,users.username) == 0) return 0;
         }
     }
     return 1;
@@ -81,7 +80,7 @@ int checkUser(char* userN,int userNLen){
 void writeNewUser(char* user,char* pass){
     User newUser;
     strcpy(newUser.username,user);
-    strcpy(newUser.password,pass);
+    strcpy(newUser.password,crypt(pass,"00"));
     newUser.balance = 0;
     FILE* fp;
     if(!fExist(U_PATH)){
@@ -112,20 +111,31 @@ void SignUp(){
             puts("Press enter to continue...");
             clearBuff(); SignUp();
         }
-        else {
+        else if(userValid == 0) {
             puts("Username already taken!!!");
-            puts("Please use another name");
+            puts("Please pick another username");
+            puts("Press enter to continue...");
+            clearBuff(); SignUp();
+        }
+        else {
+            puts("Username must not exceed 18 characters");
             puts("Press enter to continue...");
             clearBuff(); SignUp();
         }
     }
-    else if(!checkPass(pass,passConf)){
+    else if(strlen(pass) > 18){
+        puts("Password must not exceed 18 characters");
+        puts("Press enter to continue...");
+        clearBuff(); SignUp();
+    }
+    else if(strcmp(pass,passConf)){
         puts("Password didnt match!!");
         puts("Press enter to continue...");
         clearBuff(); SignUp();
     }
     else writeNewUser(user,pass);
 }
+/* ======================== */
 
 void menuOption(short unsigned choice){
     switch(choice){
@@ -136,7 +146,7 @@ void menuOption(short unsigned choice){
             SignUp();
             break;
         case 3:
-            readData("user.txt");
+            readData(U_PATH);
             break;
         default:
             clearScreen();
