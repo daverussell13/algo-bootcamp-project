@@ -2,8 +2,9 @@
 #include <unistd.h>
 #include <string.h>
 
-// MACROS
+// MACROS & GLOBAL VAR
 #define MAX_LIMIT 101
+char* U_PATH = "data/user.txt";
 
 // PROTO
 void Menu();
@@ -67,7 +68,7 @@ int checkUser(char* userN,int userNLen){
     }
     User users;
     FILE* fp;
-    if(fp = fopen("user.txt","r")){
+    if(fp = fopen(U_PATH,"r")){
         while(fread(&users,sizeof(User),1,fp)){
             if(strcmp(userN,users.username) == 0){
                 return 0;
@@ -83,12 +84,12 @@ void writeNewUser(char* user,char* pass){
     strcpy(newUser.password,pass);
     newUser.balance = 0;
     FILE* fp;
-    if(!fExist("user.txt")){
-        fp = fopen("user.txt","w");
+    if(!fExist(U_PATH)){
+        fp = fopen(U_PATH,"w");
         fwrite(&newUser,sizeof(User),1,fp);
     }
     else {
-        fp = fopen("user.txt","a");
+        fp = fopen(U_PATH,"a");
         fwrite(&newUser,sizeof(User),1,fp);
     }
     fclose(fp);
