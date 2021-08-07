@@ -20,7 +20,6 @@ void Menu();
 void SignUp();
 void Login();
 
-
 /* ======= UTILITY FUNCTION ======= */
 void clearScreen(){printf("\e[1;1H\e[2J");} // regex
 
@@ -40,7 +39,6 @@ int fExist(char* fname){
 /* =============================== */
 
 /* ========= LOGIN =========== */
-
 User* isValid(char* user){
     User users;
     FILE* fp = fopen(U_PATH,"r");
