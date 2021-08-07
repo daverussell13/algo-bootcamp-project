@@ -201,10 +201,31 @@ int isLogin(){
     return 0;
 }
 
+void delay(){
+    for (int i=0; i<1.5e8; i++) {;}
+}
+
+void printASCII() {
+    puts("           _.-------._");delay();
+    puts("        _-'_.------._ `-_");delay();
+    puts("      _- _-          `-_/");delay();
+    puts("     -  -");delay();
+    puts(" ___/  /______________");delay();
+    puts("/___  .______________/");delay();
+    puts(" ___| |_____________");delay();
+    puts("/___  .____________/");delay();
+    puts("    \\  \\");delay();
+    puts("     -_ -_             /|");delay();
+    puts("       -_ -._        _- |");delay();
+    puts("         -._ `------'_./");delay();
+    puts("            `-------'");delay();
+}
+
 void Menu(){
     short unsigned menuChoice;
     while(1){
         clearScreen();
+        printASCII();
         puts("ATM MACHINE");
         puts("1. login");
         puts("2. SignUp");
