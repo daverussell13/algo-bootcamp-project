@@ -12,7 +12,7 @@ typedef struct user {
 } User;
 
 // GLOBAL VAR
-char* U_PATH = "data/user.bin";
+char* U_PATH = "user.bin";
 User* Users = NULL;
 
 // PROTO
@@ -29,7 +29,7 @@ void clearBuff() { int c; while ((c = getchar()) != '\n' && c != EOF){} }
 
 int fExist(char* fname){
     FILE *file;
-    if (file = fopen(fname,"r")) {
+    if (file = fopen(fname,"rb")) {
         fclose(file);
         return 1;
     }
@@ -52,7 +52,7 @@ void invalidInput(){
 /* ========= LOGIN =========== */
 User* isValid(char* user){
     User users;
-    FILE* fp = fopen(U_PATH,"r");
+    FILE* fp = fopen(U_PATH,"rb");
     while(fread(&users,sizeof(User),1,fp)){
         if(!strcmp(users.username,user)) {
             User* ptr = (User*)malloc(sizeof(User));
@@ -109,7 +109,7 @@ void Login(){
 void readData(char* fname){
     User users;
     FILE* fp;
-    if(fp = fopen(fname,"r")){
+    if(fp = fopen(fname,"rb")){
         while(fread(&users,sizeof(User),1,fp)){
             printf("%s %s\n%lld\n",users.username,users.password,users.balance);
         }
@@ -129,7 +129,7 @@ int checkUser(char* userN,int userNLen){
     }
     User users;
     FILE* fp;
-    if((fp = fopen(U_PATH,"r"))){
+    if((fp = fopen(U_PATH,"rb"))){
         while(fread(&users,sizeof(User),1,fp)){
             if(strcmp(userN,users.username) == 0) return 0;
         }
@@ -144,11 +144,11 @@ void writeNewUser(char* user,char* pass){
     newUser.balance = 0;
     FILE* fp;
     if(!fExist(U_PATH)){
-        fp = fopen(U_PATH,"w");
+        fp = fopen(U_PATH,"wb");
         fwrite(&newUser,sizeof(User),1,fp);
     }
     else {
-        fp = fopen(U_PATH,"a");
+        fp = fopen(U_PATH,"ab");
         fwrite(&newUser,sizeof(User),1,fp);
     }
     fclose(fp);
@@ -289,9 +289,7 @@ void menuOption(short unsigned choice){
             readData(U_PATH);
             break;
         default:
-            puts("Input tidak sesuai !!!");
-            puts("Tekan enter untuk melanjutkan..");
-            clearBuff();
+            invalidInput();
             break;
     }
 }
