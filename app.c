@@ -8,7 +8,7 @@
 typedef struct user {
     char username[MAX_LIMIT];
     char password[MAX_LIMIT];
-    long long balance;
+    unsigned long long balance;
 } User;
 
 // GLOBAL VAR
@@ -47,6 +47,11 @@ void invalidInput(){
     puts("Tekan enter untuk melanjutkan..");
     clearBuff();
 }
+
+void freezePrompt(){
+    puts("Tekan enter untuk melanjutkan...");
+    clearBuff();
+}
 /* =============================== */
 
 /* ========= LOGIN =========== */
@@ -81,25 +86,21 @@ void Login(){
             if(Users){
                 if(!strcmp(Users->password,hashPass)){
                     puts("Berhasil login..");
-                    puts("Tekan enter untuk melanjutkan...");
-                    clearBuff(); flag = 0;
+                    freezePrompt(); flag = 0;
                 }
                 else {
                     puts("Username/password salah atau tidak terdaftar");
-                    puts("Tekan enter untuk melanjutkan...");
-                    clearBuff(); flag = 1;
+                    freezePrompt(); flag = 1;
                 }
             }
             else {
                 puts("Username/password salah atau tidak terdaftar");
-                puts("Tekan enter untuk melanjutkan...");
-                clearBuff(); flag = 1;
+                freezePrompt(); flag = 1;
             }
         }
         else {
             puts("Silahkan melakukan SignUp terlebih dahulu...");
-            puts("Tekan enter untuk melanjutkan...");
-            clearBuff(); flag = 0;
+            freezePrompt(); flag = 0;
         }
     } while(flag);
 }
@@ -111,7 +112,7 @@ void readData(char* fname){
     FILE* fp;
     if(fp = fopen(fname,"rb")){
         while(fread(&users,sizeof(User),1,fp)){
-            printf("%s %s\n%lld\n",users.username,users.password,users.balance);
+            printf("%s %s\n%llu\n",users.username,users.password,users.balance);
         }
     }
     else printf("File doesnt exist...");
@@ -141,7 +142,7 @@ void writeNewUser(char* user,char* pass){
     User newUser;
     strcpy(newUser.username,user);
     strcpy(newUser.password,crypt(pass,"00"));
-    newUser.balance = 0;
+    newUser.balance = 1000000;
     FILE* fp;
     if(!fExist(U_PATH)){
         fp = fopen(U_PATH,"wb");
@@ -170,42 +171,75 @@ void SignUp(){
         if(userValid != 1){
             if(userValid == 2){
                 puts("Username mengandung character terlarang!!!");
-                puts("Tekan enter untuk melanjutkan...");
-                clearBuff(); flag = 1;
+                freezePrompt(); flag = 1;
             }
             else if(userValid == 0) {
                 puts("Username telah digunakan!!!");
                 puts("Mohon gunakan username lain");
-                puts("Tekan enter untuk melanjutkan...");
-                clearBuff(); flag = 1;
+                freezePrompt(); flag = 1;
             }
             else {
                 puts("Username tidak melebihi 18 character!!!");
-                puts("Tekan enter untuk melanjutkan...");
-                clearBuff(); flag = 1;
+                freezePrompt(); flag = 1;
             }
         }
         else if(strlen(pass) > 18){
             puts("Password tidak melebihi 18 character!!!");
-            puts("Tekan enter untuk melanjutkan...");
-            clearBuff(); flag = 1;
+            freezePrompt(); flag = 1;
         }
         else if(strcmp(pass,passConf)){
             puts("Konfirmasi password tidak sesuai!!!");
-            puts("Tekan enter untuk melanjutkan...");
-            clearBuff(); flag = 1;
+            freezePrompt(); flag = 1;
         }
         else writeNewUser(user,pass), flag = 0;
     } while(flag);
 }
 /* ======================== */
 
+/* ===== Cek saldo utils ====== */
+long long unsigned readSaldo(const char * uname){
+    User u;
+    FILE* fp = fopen(U_PATH,"rb");
+    while(fread(&u,sizeof(User),1,fp)){
+        if(!strcmp(u.username,Users->username)){
+            return u.balance;
+        }
+    }
+}
+/* ============================ */
+
+/* ===== Tarik tunai utils ===== */
+int enoughBalance(int opt){
+    if(opt == 1) return Users->balance >= 25000;
+    else if(opt == 2) return Users->balance >= 50000;
+    else return Users->balance >= 100000;
+}
+
+void cutBalance(int opt){
+    User u;
+    FILE* fp = fopen(U_PATH,"rb+");
+    while(fread(&u,sizeof(User),1,fp)){
+        if(!strcmp(u.username,Users->username)){
+            long long min;
+            if(opt == 1) min = 25000;
+            else if(opt == 2) min = 50000;
+            else min = 100000;
+            u.balance -= min;
+            fseek(fp,-sizeof(u),1);
+            fwrite(&u,sizeof(u),1,fp);
+        }
+    }
+    fclose(fp);
+}
+/* ============================= */
+
 /* ===== ATM FUNCTION ======= */
 void cekSaldo(){
     clearScreen();
     int opt;
+    long long unsigned saldo = readSaldo(Users->username);
     puts("======= Cek Saldo ========");
-    printf("Saldo anda : Rp.%lld\n",Users->balance);
+    printf("Saldo anda : Rp.%llu\n",saldo);
     puts("1. Tarik tunai");
     puts("2. Setor tunai");
     puts("0. Kembali ke halaman menu");
@@ -219,8 +253,25 @@ void cekSaldo(){
 }
 
 void tarikTunai(){
-    puts("tarik tunai");
-    clearBuff();
+    int flag = 0;
+    do {
+        int opt; clearScreen();
+        puts("===== Tarik tunai =====");
+        puts("1. Rp. 25.000,00");
+        puts("2. Rp. 50.000,00");
+        puts("3. Rp. 100.000,00");
+        puts("0. Kembali ke halaman menu");
+        puts("=======================");
+        printf("Masukan pilihan anda : ");
+        scanf("%d",&opt); clearBuff();
+        if(opt != 1 && opt != 2 && opt != 3 && opt != 0) invalidInput();
+        else if(opt == 0) return;
+        if(!enoughBalance(opt)){
+            puts("Maaf saldo anda tidak cukup..");
+            freezePrompt();
+        }
+        else cutBalance(opt);
+    } while(flag);
 }
 
 void setorTunai(){
