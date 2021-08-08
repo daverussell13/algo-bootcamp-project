@@ -225,6 +225,7 @@ void cutBalance(int opt){
             else if(opt == 2) min = 50000;
             else min = 100000;
             u.balance -= min;
+            Users->balance -= min;
             fseek(fp,-sizeof(u),1);
             fwrite(&u,sizeof(u),1,fp);
         }
@@ -233,13 +234,17 @@ void cutBalance(int opt){
 }
 /* ============================= */
 
+/* ===== Transfer utils ======= */
+
+/* ============================ */
+
 /* ===== ATM FUNCTION ======= */
 void cekSaldo(){
     clearScreen();
     int opt;
     long long unsigned saldo = readSaldo(Users->username);
     puts("======= Cek Saldo ========");
-    printf("Saldo anda : Rp.%llu\n",saldo);
+    printf("Saldo anda : Rp. %llu\n",saldo);
     puts("1. Tarik tunai");
     puts("2. Setor tunai");
     puts("0. Kembali ke halaman menu");
@@ -264,13 +269,21 @@ void tarikTunai(){
         puts("=======================");
         printf("Masukan pilihan anda : ");
         scanf("%d",&opt); clearBuff();
-        if(opt != 1 && opt != 2 && opt != 3 && opt != 0) invalidInput();
+        if(opt != 1 && opt != 2 && opt != 3 && opt != 0) invalidInput(), flag = 1;
         else if(opt == 0) return;
-        if(!enoughBalance(opt)){
-            puts("Maaf saldo anda tidak cukup..");
-            freezePrompt();
+        else {
+            if(!enoughBalance(opt)){
+                puts("Maaf saldo anda tidak cukup..");
+                flag = 1;
+                freezePrompt();
+            }
+            else {
+                cutBalance(opt);
+                flag = 0;
+                printf("Sisa saldo anda sebesar Rp. %lld\n",Users->balance);
+                freezePrompt();
+            }
         }
-        else cutBalance(opt);
     } while(flag);
 }
 
@@ -280,7 +293,10 @@ void setorTunai(){
 }
 
 void transfer(){
-    puts("transfer");
+    int flag = 0;
+    do {
+
+    } while(flag);
     clearBuff();
 }
 /* ========================== */
