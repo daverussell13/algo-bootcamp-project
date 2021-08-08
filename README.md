@@ -1,2 +1,3 @@
 # cproject
-Hello
+A Simple Terminal based / CLI ATM program written in c
+
