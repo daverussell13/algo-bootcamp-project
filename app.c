@@ -2,7 +2,9 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
+
 #define MAX_LIMIT 101
+#define BLNC_LIMIT 18*(1e18)
 
 // STRUCT USER
 typedef struct user {
@@ -142,7 +144,7 @@ void writeNewUser(char* user,char* pass){
     User newUser;
     strcpy(newUser.username,user);
     strcpy(newUser.password,crypt(pass,"00"));
-    newUser.balance = 1000000;
+    newUser.balance = 17999999999999999999;
     FILE* fp;
     if(!fExist(U_PATH)){
         fp = fopen(U_PATH,"wb");
@@ -196,8 +198,8 @@ void SignUp(){
 }
 /* ======================== */
 
-/* ===== Cek saldo utils ====== */
-long long unsigned readSaldo(const char * uname){
+/* ===== Banking utils ===== */
+long long unsigned getBalance(const char* uname){
     User u;
     FILE* fp = fopen(U_PATH,"rb");
     while(fread(&u,sizeof(User),1,fp)){
@@ -205,44 +207,80 @@ long long unsigned readSaldo(const char * uname){
             return u.balance;
         }
     }
-}
-/* ============================ */
-
-/* ===== Tarik tunai utils ===== */
-int enoughBalance(int opt){
-    if(opt == 1) return Users->balance >= 25000;
-    else if(opt == 2) return Users->balance >= 50000;
-    else return Users->balance >= 100000;
+    fclose(fp);
 }
 
-void cutBalance(int opt){
+int enoughBalance(long long money,const char* uName){
+    long long unsigned balance = getBalance(uName);
+    if(balance >= money) return 1;
+    return 0;
+}
+
+long long getMoney(int opt){
+    switch(opt){
+        case 0:
+            return 0;
+        case 1:
+            return 50000;
+        case 2:
+            return 100000;
+        case 3:
+            return 500000;
+        case 4:
+            return 1000000;
+        case 5:
+            return 5000000;
+        case 6:
+            return 10000000;
+        default:
+            return -1;
+    }
+}
+
+void cutBalance(long long unsigned money,const char* uName){
     User u;
     FILE* fp = fopen(U_PATH,"rb+");
     while(fread(&u,sizeof(User),1,fp)){
         if(!strcmp(u.username,Users->username)){
-            long long min;
-            if(opt == 1) min = 25000;
-            else if(opt == 2) min = 50000;
-            else min = 100000;
-            u.balance -= min;
-            Users->balance -= min;
+            u.balance -= money;
             fseek(fp,-sizeof(u),1);
             fwrite(&u,sizeof(u),1,fp);
         }
     }
     fclose(fp);
 }
+
+void addBalance(long long unsigned money,const char* uName){
+    User u;
+    FILE* fp = fopen(U_PATH,"rb+");
+    while(fread(&u,sizeof(User),1,fp)){
+        if(!strcmp(u.username,uName)){
+            u.balance += money;
+            fseek(fp,-sizeof(u),1);
+            fwrite(&u,sizeof(u),1,fp);
+        }
+    }
+    fclose(fp);
+}
+
+long long unsigned maksimalSetor(long long unsigned balance) {return (BLNC_LIMIT-balance);}
+
+int aboveLimit(long long unsigned money,long long unsigned balance){
+    if(balance <= maksimalSetor(money)) return 0;
+    return 1;
+}
+
+void success(){
+    puts("Transaksi berhasil dilakukan..");
+    printf("Saldo anda saat ini : Rp. %lld\n",getBalance(Users->username));
+}
 /* ============================= */
-
-/* ===== Transfer utils ======= */
-
-/* ============================ */
 
 /* ===== ATM FUNCTION ======= */
 void cekSaldo(){
     clearScreen();
     int opt;
-    long long unsigned saldo = readSaldo(Users->username);
+    long long unsigned saldo = getBalance(Users->username);
     puts("======= Cek Saldo ========");
     printf("Saldo anda : Rp. %llu\n",saldo);
     puts("1. Tarik tunai");
@@ -262,25 +300,29 @@ void tarikTunai(){
     do {
         int opt; clearScreen();
         puts("===== Tarik tunai =====");
-        puts("1. Rp. 25.000,00");
-        puts("2. Rp. 50.000,00");
-        puts("3. Rp. 100.000,00");
+        puts("1. Rp. 50.000,00");
+        puts("2. Rp. 100.000,00");
+        puts("3. Rp. 500.000,00");
+        puts("4. Rp. 1.000.000,00");
+        puts("5. Rp. 5.000.000,00");
+        puts("6. Rp. 10.000.000,00");
         puts("0. Kembali ke halaman menu");
         puts("=======================");
         printf("Masukan pilihan anda : ");
         scanf("%d",&opt); clearBuff();
-        if(opt != 1 && opt != 2 && opt != 3 && opt != 0) invalidInput(), flag = 1;
+        long long money = getMoney(opt);
+        if(money < 0) invalidInput(), flag = 1;
         else if(opt == 0) return;
         else {
-            if(!enoughBalance(opt)){
+            if(!enoughBalance(money,Users->username)){
                 puts("Maaf saldo anda tidak cukup..");
                 flag = 1;
                 freezePrompt();
             }
             else {
-                cutBalance(opt);
+                cutBalance(money,Users->username);
                 flag = 0;
-                printf("Sisa saldo anda sebesar Rp. %lld\n",Users->balance);
+                success();
                 freezePrompt();
             }
         }
@@ -288,16 +330,62 @@ void tarikTunai(){
 }
 
 void setorTunai(){
-    puts("setor tunai");
-    clearBuff();
+    int flag = 0;
+    do {
+        clearScreen();
+        long long unsigned nominalSetor;
+        puts("======= Setor Tunai =======");
+        puts("(Nominal maksimal sebesar Rp. 1.000.000.000 per transaksi)");
+        printf("Masukan nominal uang : ");
+        scanf("%llu",&nominalSetor); clearBuff();
+        if(aboveLimit(nominalSetor,Users->balance)){
+            puts("Saldo anda sudah melebihi batas yang telah ditentukan..");
+            printf("Saldo maksimal yang bisa anda setor sebesar : Rp %lld\n",maksimalSetor(Users->balance));
+            freezePrompt(); flag = 1;
+        }
+        else {
+            if(nominalSetor > 1e9){
+                puts("Nominal maksimal per transaksi sebesar Rp. 1.000.000.000!!!");
+                freezePrompt(); flag = 1;
+            }
+            else {
+                addBalance(nominalSetor,Users->username);
+                flag = 0;
+                success();
+                freezePrompt();
+            }
+        }
+    } while(flag);
 }
 
 void transfer(){
-    int flag = 0;
-    do {
+    // int flag = 0;
+    // do {
+    //     clearScreen();
+    //     User *receiver;
+    //     char rName[MAX_LIMIT];
+    //     long long unsigned nominal;
+    //     puts("========= TRANSFER =========");
+    //     printf("Masukan username yang dituju : ");
+    //     scanf("%s",rName);
+    //     printf("Masukan nominal uang yang akan di transfer : ");
+    //     scanf("%lld",&nominal); clearBuff();
+    //     if(nominal > 1e10){
+    //         puts("Saldo anda tidak mencukupi..");
+    //         freezePrompt();
+    //     }
+    //     else if(nominal > Users->balance){
 
-    } while(flag);
-    clearBuff();
+    //     }
+    //     else {
+    //         receiver = isValid(rName);
+    //         if(receiver){
+
+    //         }
+    //     }
+
+    // } while(flag);
+    // clearBuff();
 }
 /* ========================== */
 
@@ -330,14 +418,17 @@ void atmMenu(){
     while(Users){
         clearScreen();
         printf("Selamat datang %s\n",Users->username);
-        puts("====== MENU ======");
-        puts("1. Cek saldo");
-        puts("2. Tarik tunai");
-        puts("3. Setor tunai");
-        puts("4. Transfer");
-        puts("0. Logout");
-        puts("==================");
-        printf("Masukan pilihan anda : ");
+        puts("=========== MENU ==========");
+        puts("||    1. Cek saldo       ||");
+        puts("||                       ||");
+        puts("||    2. Tarik tunai     ||");
+        puts("||                       ||");
+        puts("||    3. Setor tunai     ||");
+        puts("||                       ||");
+        puts("||    4. Transfer        ||");
+        puts("||                       ||");
+        puts("||    0. Logout          ||");
+        puts("===========================");
         scanf("%hu",&opt);
         clearBuff();
         atmMenuOption(opt);
@@ -380,13 +471,18 @@ void printASCII() {
 void Menu(){
     short unsigned opt;
     while(1){
-        clearScreen();
+        // clearScreen();
         // printASCII();
-        puts("ATM MACHINE");
-        puts("1. Login");
-        puts("2. SignUp");
-        puts("0. Keluar");
-        printf("Masukan pilihan anda : ");
+        puts("==========================");
+        puts("||      ATM MACHINE     ||");
+        puts("==========================");
+        puts("||\t1. Login\t||");
+        puts("||\t\t\t||");
+        puts("||\t2. SignUp\t||");
+        puts("||\t\t\t||");
+        puts("||\t0. Keluar\t||");
+        puts("==========================");
+          printf("Masukan pilihan anda : ");
         scanf("%hu",&opt);
         if(!opt) break;
         clearBuff();
