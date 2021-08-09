@@ -4,7 +4,6 @@
 #include <stdlib.h>
 
 #define MAX_LIMIT 101
-#define BLNC_LIMIT (long long unsigned)(18*(1e18))
 
 // STRUCT USER
 typedef struct user {
@@ -16,6 +15,7 @@ typedef struct user {
 // GLOBAL VAR
 char* U_PATH = "user.bin";
 User* Users = NULL;
+long long unsigned BLNC_LIMIT = 18000000000000000000ULL;
 
 // PROTO
 void Menu();
@@ -144,7 +144,7 @@ void writeNewUser(char* user,char* pass){
     User newUser;
     strcpy(newUser.username,user);
     strcpy(newUser.password,crypt(pass,"00"));
-    newUser.balance = 17999999999999999999;
+    newUser.balance = 17999999999999999999ULL;
     FILE* fp;
     if(!fExist(U_PATH)){
         fp = fopen(U_PATH,"wb");
@@ -187,6 +187,10 @@ void SignUp(){
         }
         else if(strlen(pass) > 18){
             puts("Password tidak melebihi 18 character!!!");
+            freezePrompt(); flag = 1;
+        }
+        else if(strlen(pass) == 0){
+            puts("Password tidak boleh kosong!!!");
             freezePrompt(); flag = 1;
         }
         else if(strcmp(pass,passConf)){
@@ -263,8 +267,14 @@ void addBalance(long long unsigned money,const char* uName){
     fclose(fp);
 }
 
-int aboveLimit(long long unsigned money,long long unsigned balance){
-    if(balance+money > BLNC_LIMIT) return 1;
+int aboveLimit(long long unsigned money,char* uName){
+    long long unsigned uBalance = getBalance(uName);
+    printf("hit");
+    if(uBalance == BLNC_LIMIT) return 1;
+    else if(uBalance + money > BLNC_LIMIT){
+        printf("hit");
+        return 1;
+    }
     return 0;
 }
 
@@ -336,10 +346,13 @@ void setorTunai(){
         puts("(Nominal maksimal sebesar Rp. 1.000.000.000 per transaksi)");
         printf("Masukan nominal uang : ");
         scanf("%llu",&nominalSetor); clearBuff();
-        if(aboveLimit(nominalSetor,Users->balance)){
+        if(aboveLimit(nominalSetor,Users->username)){
             puts("Saldo anda sudah melebihi batas yang telah ditentukan..");
-            printf("Saldo maksimal yang bisa anda setor sebesar : Rp %lld\n",BLNC_LIMIT-(Users->balance));
-            freezePrompt(); flag = 1;
+            long long unsigned sisa = BLNC_LIMIT-getBalance(Users->username);
+            printf("Saldo maksimal yang bisa anda setor sebesar : Rp %llu\n",sisa);
+            freezePrompt();
+            if(sisa == 0) flag = 0;
+            else flag = 1;
         }
         else {
             if(nominalSetor > 1e9){
@@ -357,33 +370,33 @@ void setorTunai(){
 }
 
 void transfer(){
-    // int flag = 0;
-    // do {
-    //     clearScreen();
-    //     User *receiver;
-    //     char rName[MAX_LIMIT];
-    //     long long unsigned nominal;
-    //     puts("========= TRANSFER =========");
-    //     printf("Masukan username yang dituju : ");
-    //     scanf("%s",rName);
-    //     printf("Masukan nominal uang yang akan di transfer : ");
-    //     scanf("%lld",&nominal); clearBuff();
-    //     if(nominal > 1e10){
-    //         puts("Saldo anda tidak mencukupi..");
-    //         freezePrompt();
-    //     }
-    //     else if(nominal > Users->balance){
+    int flag = 0;
+    do {
+        clearScreen();
+        User *receiver;
+        char rName[MAX_LIMIT];
+        long long unsigned nominal;
+        puts("========= TRANSFER =========");
+        printf("Masukan username yang dituju : ");
+        scanf("%s",rName);
+        printf("Masukan nominal uang yang akan di transfer : ");
+        scanf("%lld",&nominal); clearBuff();
+        if(nominal > 1e10){
+            puts("Saldo anda tidak mencukupi..");
+            freezePrompt();
+        }
+        else if(nominal > Users->balance){
 
-    //     }
-    //     else {
-    //         receiver = isValid(rName);
-    //         if(receiver){
+        }
+        else {
+            receiver = isValid(rName);
+            if(receiver){
 
-    //         }
-    //     }
+            }
+        }
 
-    // } while(flag);
-    // clearBuff();
+    } while(flag);
+    clearBuff();
 }
 /* ========================== */
 
@@ -427,6 +440,7 @@ void atmMenu(){
         puts("||                       ||");
         puts("||    0. Logout          ||");
         puts("===========================");
+        printf("Masukan pilihan anda : ");
         scanf("%hu",&opt);
         clearBuff();
         atmMenuOption(opt);
@@ -480,7 +494,7 @@ void Menu(){
         puts("||\t\t\t||");
         puts("||\t0. Keluar\t||");
         puts("==========================");
-          printf("Masukan pilihan anda : ");
+        printf("Masukan pilihan anda : ");
         scanf("%hu",&opt);
         if(!opt) break;
         clearBuff();
