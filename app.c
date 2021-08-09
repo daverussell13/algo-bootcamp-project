@@ -31,7 +31,7 @@ void clearBuff() { int c; while ((c = getchar()) != '\n' && c != EOF){} }
 
 int fExist(char* fname){
     FILE *file;
-    if (file = fopen(fname,"rb")) {
+    if ((file = fopen(fname,"rb"))) {
         fclose(file);
         return 1;
     }
@@ -112,7 +112,7 @@ void Login(){
 void readData(char* fname){
     User users;
     FILE* fp;
-    if(fp = fopen(fname,"rb")){
+    if((fp = fopen(fname,"rb"))){
         while(fread(&users,sizeof(User),1,fp)){
             printf("%s %s\n%llu\n",users.username,users.password,users.balance);
         }
@@ -211,6 +211,7 @@ long long unsigned getBalance(const char* uname){
             return u.balance;
         }
     }
+    return 0;
     fclose(fp);
 }
 
@@ -483,7 +484,7 @@ void printASCII() {
 void Menu(){
     short unsigned opt;
     while(1){
-        // clearScreen();
+        clearScreen();
         // printASCII();
         puts("==========================");
         puts("||      ATM MACHINE     ||");
