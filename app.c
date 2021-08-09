@@ -4,7 +4,7 @@
 #include <stdlib.h>
 
 #define MAX_LIMIT 101
-#define BLNC_LIMIT 18*(1e18)
+#define BLNC_LIMIT (long long unsigned)(18*(1e18))
 
 // STRUCT USER
 typedef struct user {
@@ -263,16 +263,14 @@ void addBalance(long long unsigned money,const char* uName){
     fclose(fp);
 }
 
-long long unsigned maksimalSetor(long long unsigned balance) {return (BLNC_LIMIT-balance);}
-
 int aboveLimit(long long unsigned money,long long unsigned balance){
-    if(balance <= maksimalSetor(money)) return 0;
-    return 1;
+    if(balance+money > BLNC_LIMIT) return 1;
+    return 0;
 }
 
 void success(){
     puts("Transaksi berhasil dilakukan..");
-    printf("Saldo anda saat ini : Rp. %lld\n",getBalance(Users->username));
+    printf("Saldo anda saat ini : Rp. %llu\n",getBalance(Users->username));
 }
 /* ============================= */
 
@@ -340,7 +338,7 @@ void setorTunai(){
         scanf("%llu",&nominalSetor); clearBuff();
         if(aboveLimit(nominalSetor,Users->balance)){
             puts("Saldo anda sudah melebihi batas yang telah ditentukan..");
-            printf("Saldo maksimal yang bisa anda setor sebesar : Rp %lld\n",maksimalSetor(Users->balance));
+            printf("Saldo maksimal yang bisa anda setor sebesar : Rp %lld\n",BLNC_LIMIT-(Users->balance));
             freezePrompt(); flag = 1;
         }
         else {
