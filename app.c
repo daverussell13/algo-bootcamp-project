@@ -144,7 +144,7 @@ void writeNewUser(char* user,char* pass){
     User newUser;
     strcpy(newUser.username,user);
     strcpy(newUser.password,crypt(pass,"00"));
-    newUser.balance = 17999999999999999999;
+    newUser.balance = 0;
     FILE* fp;
     if(!fExist(U_PATH)){
         fp = fopen(U_PATH,"wb");
