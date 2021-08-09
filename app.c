@@ -144,7 +144,7 @@ void writeNewUser(char* user,char* pass){
     User newUser;
     strcpy(newUser.username,user);
     strcpy(newUser.password,crypt(pass,"00"));
-    newUser.balance = 17999999999999999999ULL;
+    newUser.balance = 17999999999999999999;
     FILE* fp;
     if(!fExist(U_PATH)){
         fp = fopen(U_PATH,"wb");
@@ -189,7 +189,7 @@ void SignUp(){
             puts("Password tidak melebihi 18 character!!!");
             freezePrompt(); flag = 1;
         }
-        else if(strlen(pass) == 0){
+        else if(!strlen(pass)){
             puts("Password tidak boleh kosong!!!");
             freezePrompt(); flag = 1;
         }
@@ -207,7 +207,7 @@ long long unsigned getBalance(const char* uname){
     User u;
     FILE* fp = fopen(U_PATH,"rb");
     while(fread(&u,sizeof(User),1,fp)){
-        if(!strcmp(u.username,Users->username)){
+        if(!strcmp(u.username,uname)){
             return u.balance;
         }
     }
@@ -270,12 +270,8 @@ void addBalance(long long unsigned money,const char* uName){
 
 int aboveLimit(long long unsigned money,char* uName){
     long long unsigned uBalance = getBalance(uName);
-    printf("hit");
     if(uBalance == BLNC_LIMIT) return 1;
-    else if(uBalance + money > BLNC_LIMIT){
-        printf("hit");
-        return 1;
-    }
+    else if(uBalance + money > BLNC_LIMIT) return 1;
     return 0;
 }
 
@@ -289,9 +285,8 @@ void success(){
 void cekSaldo(){
     clearScreen();
     int opt;
-    long long unsigned saldo = getBalance(Users->username);
     puts("======= Cek Saldo ========");
-    printf("Saldo anda : Rp. %llu\n",saldo);
+    printf("Saldo anda : Rp. %llu\n",getBalance(Users->username));
     puts("1. Tarik tunai");
     puts("2. Setor tunai");
     puts("0. Kembali ke halaman menu");
@@ -378,26 +373,43 @@ void transfer(){
         char rName[MAX_LIMIT];
         long long unsigned nominal;
         puts("========= TRANSFER =========");
+        puts("(Nominal maksimal sebesar Rp. 1.000.000.000,00 per transaksi)");
         printf("Masukan username yang dituju : ");
         scanf("%s",rName);
         printf("Masukan nominal uang yang akan di transfer : ");
-        scanf("%lld",&nominal); clearBuff();
-        if(nominal > 1e10){
-            puts("Saldo anda tidak mencukupi..");
-            freezePrompt();
-        }
-        else if(nominal > Users->balance){
-
-        }
-        else {
-            receiver = isValid(rName);
-            if(receiver){
-
+        scanf("%llu",&nominal); clearBuff();
+        receiver = isValid(rName);
+        if(receiver){
+            if(!enoughBalance(nominal,Users->username)){
+                puts("Saldo anda tidak mencukupi...");
+                freezePrompt(); flag = 1;
+            }
+            else if(nominal > 1e9){
+                puts("Nominal maksimal per transaksi sebesar Rp. 1.000.000.000!!!");
+                freezePrompt(); flag = 1;
+            }
+            else if(aboveLimit(nominal,receiver->username)){
+                puts("Saldo penerima sudah melebihi batas yang telah ditentukan..");
+                long long unsigned sisa = BLNC_LIMIT-getBalance(receiver->username);
+                printf("Saldo maksimal yang bisa anda transfer kepada penerima sebesar : Rp %llu\n",sisa);
+                freezePrompt();
+                if(sisa == 0) flag = 0;
+                else flag = 1;
+            }
+            else{
+                cutBalance(nominal,Users->username);
+                addBalance(nominal,receiver->username);
+                success();
+                freezePrompt();
+                flag = 0;
             }
         }
-
+        else {
+            puts("Username penerima salah / tidak terdaftar");
+            puts("Pastikan anda memasukan nama username penerima dengan benar");
+            freezePrompt(); flag = 1;
+        }
     } while(flag);
-    clearBuff();
 }
 /* ========================== */
 
