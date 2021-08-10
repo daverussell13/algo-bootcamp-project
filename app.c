@@ -2,14 +2,27 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
+#include <time.h>
 
 #define MAX_LIMIT 101
+#define QUEUE_LIMIT 10
+
+// STRUCT HISTORY
+typedef struct history {
+    char time[MAX_LIMIT];
+    char transactionType[MAX_LIMIT];
+    unsigned long long sisaSaldo;
+} History;
 
 // STRUCT USER
 typedef struct user {
     char username[MAX_LIMIT];
     char password[MAX_LIMIT];
     unsigned long long balance;
+    // queue
+    History historyList[QUEUE_LIMIT];
+    int hlFront;
+    int hlBack;
 } User;
 
 // GLOBAL VAR
@@ -23,6 +36,7 @@ void SignUp();
 void Login();
 void tarikTunai();
 void setorTunai();
+User* getUser();
 
 /* ======= UTILITY FUNCTION ======= */
 void clearScreen(){printf("\e[1;1H\e[2J");}
@@ -56,8 +70,36 @@ void freezePrompt(){
 }
 /* =============================== */
 
+/* ========= History Function ========== */
+History makeHistory(const char* time, const char* type, long long unsigned sisa){
+    History h;
+    strcpy(h.time,time);
+    strcpy(h.transactionType,type);
+    h.sisaSaldo = sisa;
+    return h;
+}
+
+int isFull(User users){
+    if(((users.hlBack+1)%QUEUE_LIMIT) == (users.hlFront)) return 1;
+    return 0;
+}
+
+int isEmpty(User users){
+    if(users.hlBack == -1 && users.hlFront == -1) return 1;
+    return 0;
+}
+
+char* getTime(){
+    time_t mytime;
+    time(&mytime);
+    char *t = ctime(&mytime);
+    if (t[strlen(t)-1] == '\n') t[strlen(t)-1] = '\0';
+    return t;
+}
+/* ===================================== */
+
 /* ========= LOGIN =========== */
-User* isValid(char* user){
+User* getUser(char* user){
     User users;
     FILE* fp = fopen(U_PATH,"rb");
     while(fread(&users,sizeof(User),1,fp)){
@@ -83,7 +125,7 @@ void Login(){
         char* ptr = getpass("Password : ");
         strcpy(pass,ptr);
         if(fExist(U_PATH)){
-            Users = isValid(user);
+            Users = getUser(user);
             char* hashPass = crypt(pass,"00");
             if(Users){
                 if(!strcmp(Users->password,hashPass)){
@@ -114,7 +156,17 @@ void readData(char* fname){
     FILE* fp;
     if((fp = fopen(fname,"rb"))){
         while(fread(&users,sizeof(User),1,fp)){
-            printf("%s %s\n%llu\n",users.username,users.password,users.balance);
+            printf("%s %s %llu\n",users.username,users.password,users.balance);
+            printf("%d %d\n",users.hlFront,users.hlBack);
+            if(isEmpty(users)) printf("history still empty");
+            else {
+                int i = users.hlFront;
+                while(1){
+                    printf("%s %s %lld\n",users.historyList[i].time,users.historyList[i].transactionType,users.historyList[i].sisaSaldo);
+                    if(i == users.hlBack) break;
+                    i = (i+1)%QUEUE_LIMIT;
+                }
+            }
         }
     }
     else printf("File doesnt exist...");
@@ -145,6 +197,8 @@ void writeNewUser(char* user,char* pass){
     strcpy(newUser.username,user);
     strcpy(newUser.password,crypt(pass,"00"));
     newUser.balance = 0;
+    newUser.hlFront = -1;
+    newUser.hlBack = -1;
     FILE* fp;
     if(!fExist(U_PATH)){
         fp = fopen(U_PATH,"wb");
@@ -242,12 +296,24 @@ long long getMoney(int opt){
     }
 }
 
-void cutBalance(long long unsigned money,const char* uName){
+void cutBalance(long long unsigned money,const char* uName,const char* type){
     User u;
     FILE* fp = fopen(U_PATH,"rb+");
     while(fread(&u,sizeof(User),1,fp)){
         if(!strcmp(u.username,Users->username)){
             u.balance -= money;
+            char* time = getTime();
+            History hist = makeHistory(time,type,u.balance);
+            if(isFull(u)) u.hlFront = (u.hlFront+1)%QUEUE_LIMIT;
+            if(isEmpty(u)){
+                u.hlFront += 1;
+                u.hlBack += 1;
+                u.historyList[u.hlBack] = hist;
+            }
+            else {
+                u.hlBack = (u.hlBack+1)%QUEUE_LIMIT;
+                u.historyList[u.hlBack] = hist;
+            }
             fseek(fp,-sizeof(u),1);
             fwrite(&u,sizeof(u),1,fp);
         }
@@ -255,12 +321,24 @@ void cutBalance(long long unsigned money,const char* uName){
     fclose(fp);
 }
 
-void addBalance(long long unsigned money,const char* uName){
+void addBalance(long long unsigned money,const char* uName,const char* type){
     User u;
     FILE* fp = fopen(U_PATH,"rb+");
     while(fread(&u,sizeof(User),1,fp)){
         if(!strcmp(u.username,uName)){
             u.balance += money;
+            char* time = getTime();
+            History hist = makeHistory(time,type,u.balance);
+            if(isFull(u)) u.hlFront = (u.hlFront+1)%QUEUE_LIMIT;
+            if(isEmpty(u)){
+                u.hlFront += 1;
+                u.hlBack += 1;
+                u.historyList[u.hlBack] = hist;
+            }
+            else {
+                u.hlBack = (u.hlBack+1)%QUEUE_LIMIT;
+                u.historyList[u.hlBack] = hist;
+            }
             fseek(fp,-sizeof(u),1);
             fwrite(&u,sizeof(u),1,fp);
         }
@@ -324,7 +402,7 @@ void tarikTunai(){
                 freezePrompt();
             }
             else {
-                cutBalance(money,Users->username);
+                cutBalance(money,Users->username,"Tarik Tunai");
                 flag = 0;
                 success();
                 freezePrompt();
@@ -356,7 +434,7 @@ void setorTunai(){
                 freezePrompt(); flag = 1;
             }
             else {
-                addBalance(nominalSetor,Users->username);
+                addBalance(nominalSetor,Users->username,"Setor Tunai");
                 flag = 0;
                 success();
                 freezePrompt();
@@ -378,7 +456,7 @@ void transfer(){
         scanf("%s",rName);
         printf("Masukan nominal uang yang akan di transfer : ");
         scanf("%llu",&nominal); clearBuff();
-        receiver = isValid(rName);
+        receiver = getUser(rName);
         if(receiver){
             if(!enoughBalance(nominal,Users->username)){
                 puts("Saldo anda tidak mencukupi...");
@@ -397,8 +475,8 @@ void transfer(){
                 else flag = 1;
             }
             else{
-                cutBalance(nominal,Users->username);
-                addBalance(nominal,receiver->username);
+                cutBalance(nominal,Users->username,"Transfer keluar");
+                addBalance(nominal,receiver->username,"Transfer masuk");
                 success();
                 freezePrompt();
                 flag = 0;
