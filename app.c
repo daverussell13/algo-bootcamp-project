@@ -96,6 +96,42 @@ char* getTime(){
     if (t[strlen(t)-1] == '\n') t[strlen(t)-1] = '\0';
     return t;
 }
+
+void printHistory(){
+    User users;
+    FILE* fp;
+    if((fp = fopen(U_PATH,"rb"))){
+        while(fread(&users,sizeof(User),1,fp)){
+            if(!strcmp(users.username,Users->username)){
+                clearScreen();
+                if(isEmpty(users)) printf("history still empty\n");
+                else {
+                    puts("======================== History ==========================");
+                    puts("|| Tanggal:\t\t\tTipe Transaksi:\t Saldo:\t ||");
+                    // LAMA -> BARU
+                    // int i = users.hlFront;
+                    // while(1){
+                    //     printf("%s\t%s\t%lld\n",users.historyList[i].time,users.historyList[i].transactionType,users.historyList[i].sisaSaldo);
+                    //     if(i == users.hlBack) break;
+                    //     i = (i+1)%QUEUE_LIMIT;
+                    // }
+                    // BARU -> LAMA
+                    int i = users.hlBack;
+                    while(1){
+                        printf("|| %s\t%s\t %lld\t ||\n",users.historyList[i].time,users.historyList[i].transactionType,users.historyList[i].sisaSaldo);
+                        if(i == users.hlFront) break;
+                        i--;
+                        if(i < 0) i = QUEUE_LIMIT-1;
+                    }
+                    puts("===========================================================");
+                }
+            }
+        }
+    }
+    else printf("File doesnt exist...");
+    freezePrompt();
+    fclose(fp);
+}
 /* ===================================== */
 
 /* ========= LOGIN =========== */
@@ -509,6 +545,9 @@ void atmMenuOption(short unsigned opt){
         case 4:
             transfer();
             break;
+        case 5:
+            printHistory();
+            break;
         default:
             invalidInput();
             break;
@@ -520,17 +559,19 @@ void atmMenu(){
     while(Users){
         clearScreen();
         printf("Selamat datang %s\n",Users->username);
-        puts("=========== MENU ==========");
-        puts("||    1. Cek saldo       ||");
-        puts("||                       ||");
-        puts("||    2. Tarik tunai     ||");
-        puts("||                       ||");
-        puts("||    3. Setor tunai     ||");
-        puts("||                       ||");
-        puts("||    4. Transfer        ||");
-        puts("||                       ||");
-        puts("||    0. Logout          ||");
-        puts("===========================");
+        puts("================= MENU ===============");
+        puts("||       1. Cek saldo               ||");
+        puts("||                                  ||");
+        puts("||       2. Tarik tunai             ||");
+        puts("||                                  ||");
+        puts("||       3. Setor tunai             ||");
+        puts("||                                  ||");
+        puts("||       4. Transfer                ||");
+        puts("||                                  ||");
+        puts("||       5. Riwayat transaksi       ||");
+        puts("||                                  ||");
+        puts("||       0. Logout                  ||");
+        puts("======================================");
         printf("Masukan pilihan anda : ");
         scanf("%hu",&opt);
         clearBuff();
