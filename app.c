@@ -12,6 +12,7 @@ typedef struct history {
     char time[MAX_LIMIT];
     char transactionType[MAX_LIMIT];
     unsigned long long sisaSaldo;
+    long dc;
 } History;
 
 // STRUCT USER
@@ -71,11 +72,24 @@ void freezePrompt(){
 /* =============================== */
 
 /* ========= History Function ========== */
-History makeHistory(const char* time, const char* type, long long unsigned sisa){
+long diff(long long unsigned before, long long unsigned after){
+    long dif;
+    if(before > after){
+        dif = before - after;
+        return -dif;
+    }
+    else {
+        dif = after - before;
+        return dif;
+    }
+}
+
+History makeHistory(const char* time, const char* type, long long unsigned sisa, long long unsigned before){
     History h;
     strcpy(h.time,time);
     strcpy(h.transactionType,type);
     h.sisaSaldo = sisa;
+    h.dc = diff(before,sisa);
     return h;
 }
 
@@ -97,7 +111,45 @@ char* getTime(){
     return t;
 }
 
-void printHistory(){
+void printHeader(){
+    for(int i = 0; i <= 86; i++){
+        if(i == 0 || i == 28 || i == 49 || i == 63) printf("+");
+        else if(i == 86) printf("+\n");
+        else printf("-");
+    }
+    printf("|");
+    for(int i = 0; i < 10; i++) printf(" ");
+    printf("Tanggal");
+    for(int i = 0; i < 10; i++) printf(" ");
+    printf("|");
+    for(int i = 0; i < 6; i++) printf(" ");
+    printf("Transaksi");
+    for(int i = 0; i < 5; i++) printf(" ");
+    printf("|");
+    for(int i = 0; i < 5; i++) printf(" ");
+    printf("D/C");
+    for(int i = 0; i < 5; i++) printf(" ");
+    printf("|");
+    for(int i = 0; i < 9; i++) printf(" ");
+    printf("Saldo");
+    for(int i = 0; i < 8; i++) printf(" ");
+    printf("|\n");
+    for(int i = 0; i <= 86; i++){
+        if(i == 0 || i == 28 || i == 49 || i == 63) printf("+");
+        else if(i == 86) printf("+\n");
+        else printf("-");
+    }
+}
+
+void printFooter(){
+    for(int i = 0; i <= 86; i++){
+        if(i == 0 || i == 28 || i == 49 || i == 63) printf("+");
+        else if(i == 86) printf("+\n");
+        else printf("-");
+    }
+}
+
+void printHistory(int ascending){
     User users;
     FILE* fp;
     if((fp = fopen(U_PATH,"rb"))){
@@ -106,24 +158,39 @@ void printHistory(){
                 clearScreen();
                 if(isEmpty(users)) printf("history still empty\n");
                 else {
-                    puts("======================== History ==========================");
-                    puts("|| Tanggal:\t\t\tTipe Transaksi:\t Saldo:\t ||");
-                    // LAMA -> BARU
-                    // int i = users.hlFront;
-                    // while(1){
-                    //     printf("%s\t%s\t%lld\n",users.historyList[i].time,users.historyList[i].transactionType,users.historyList[i].sisaSaldo);
-                    //     if(i == users.hlBack) break;
-                    //     i = (i+1)%QUEUE_LIMIT;
-                    // }
-                    // BARU -> LAMA
-                    int i = users.hlBack;
-                    while(1){
-                        printf("|| %s\t%s\t %lld\t ||\n",users.historyList[i].time,users.historyList[i].transactionType,users.historyList[i].sisaSaldo);
-                        if(i == users.hlFront) break;
-                        i--;
-                        if(i < 0) i = QUEUE_LIMIT-1;
+                    for(int i = 0; i < 35; i++) printf(" ");
+                    printf("Riwayat Transaksi");
+                    for(int i = 0; i < 35; i++) printf(" ");
+                    printf("\n");
+                    printHeader();
+                    if(!ascending){
+                        int i = users.hlFront;
+                        while(1){
+                            printf("| %-25s | %-18s | %11ld | %20llu |\n",
+                                users.historyList[i].time,
+                                users.historyList[i].transactionType,
+                                users.historyList[i].dc,
+                                users.historyList[i].sisaSaldo
+                            );
+                            if(i == users.hlBack) break;
+                            i = (i+1)%QUEUE_LIMIT;
+                        }
                     }
-                    puts("===========================================================");
+                    else {
+                        int i = users.hlBack;
+                        while(1){
+                            printf("| %-25s | %-18s | %11ld | %20llu |\n",
+                                users.historyList[i].time,
+                                users.historyList[i].transactionType,
+                                users.historyList[i].dc,
+                                users.historyList[i].sisaSaldo
+                            );
+                            if(i == users.hlFront) break;
+                            i--;
+                            if(i < 0) i = QUEUE_LIMIT-1;
+                        }
+                    }
+                    printFooter();
                 }
             }
         }
@@ -150,12 +217,32 @@ User* getUser(char* user){
     return NULL;
 }
 
+void signUpAscii(){
+    char art;
+    FILE* fp = fopen("signUp.txt","r");
+    while(fscanf(fp,"%c",&art)){
+        if(art != '0') printf("%c",art);
+        else break;
+    }
+    fclose(fp);
+}
+
+void signInAscii(){
+    char art;
+    FILE* fp = fopen("signIn.txt","r");
+    while(fscanf(fp,"%c",&art)){
+        if(art != '0') printf("%c",art);
+        else break;
+    }
+    fclose(fp);
+}
+
 void Login(){
     int flag = 0;
     do {
         clearScreen();
         char user[MAX_LIMIT], pass[MAX_LIMIT];
-        puts(" == Login == ");
+        signInAscii();
         printf("Username : ");
         scanf("%s",user); clearBuff();
         char* ptr = getpass("Password : ");
@@ -232,7 +319,7 @@ void writeNewUser(char* user,char* pass){
     User newUser;
     strcpy(newUser.username,user);
     strcpy(newUser.password,crypt(pass,"00"));
-    newUser.balance = 0;
+    newUser.balance = 18000000000000000000ULL;
     newUser.hlFront = -1;
     newUser.hlBack = -1;
     FILE* fp;
@@ -252,7 +339,7 @@ void SignUp(){
     do {
         clearScreen();
         char user[MAX_LIMIT], pass[MAX_LIMIT], passConf[MAX_LIMIT];
-        puts(" == Sign Up == ");
+        signUpAscii();
         printf("Masukan Username : ");
         scanf("%s",user); clearBuff();
         char *ptr = getpass("Masukan Password : ");
@@ -337,9 +424,10 @@ void cutBalance(long long unsigned money,const char* uName,const char* type){
     FILE* fp = fopen(U_PATH,"rb+");
     while(fread(&u,sizeof(User),1,fp)){
         if(!strcmp(u.username,Users->username)){
+            unsigned long long temp = u.balance;
             u.balance -= money;
             char* time = getTime();
-            History hist = makeHistory(time,type,u.balance);
+            History hist = makeHistory(time,type,u.balance,temp);
             if(isFull(u)) u.hlFront = (u.hlFront+1)%QUEUE_LIMIT;
             if(isEmpty(u)){
                 u.hlFront += 1;
@@ -362,9 +450,10 @@ void addBalance(long long unsigned money,const char* uName,const char* type){
     FILE* fp = fopen(U_PATH,"rb+");
     while(fread(&u,sizeof(User),1,fp)){
         if(!strcmp(u.username,uName)){
+            unsigned long long temp = u.balance;
             u.balance += money;
             char* time = getTime();
-            History hist = makeHistory(time,type,u.balance);
+            History hist = makeHistory(time,type,u.balance,temp);
             if(isFull(u)) u.hlFront = (u.hlFront+1)%QUEUE_LIMIT;
             if(isEmpty(u)){
                 u.hlFront += 1;
@@ -546,7 +635,10 @@ void atmMenuOption(short unsigned opt){
             transfer();
             break;
         case 5:
-            printHistory();
+            printHistory(1);
+            break;
+        case 6:
+            printHistory(0);
             break;
         default:
             invalidInput();
@@ -587,9 +679,9 @@ void menuOption(short unsigned choice){
         case 2:
             SignUp();
             break;
-        case 3:
-            readData(U_PATH);
-            break;
+        // case 3:
+        //     readData(U_PATH);
+        //     break;
         default:
             invalidInput();
             break;
@@ -597,35 +689,48 @@ void menuOption(short unsigned choice){
 }
 
 void printASCII() {
-    puts("           _.-------._");delay();
-    puts("        _-'_.------._ `-_");delay();
-    puts("      _- _-          `-_/");delay();
-    puts("     -  -");delay();
-    puts(" ___/  /______________");delay();
-    puts("/___  .______________/");delay();
-    puts(" ___| |_____________");delay();
-    puts("/___  .____________/");delay();
-    puts("    \\  \\");delay();
-    puts("     -_ -_             /|");delay();
-    puts("       -_ -._        _- |");delay();
-    puts("         -._ `------'_./");delay();
-    puts("            `-------'");delay();
+    puts(" █████╗ ████████╗███╗   ███╗    ███╗   ███╗ █████╗  ██████╗██╗  ██╗██╗███╗   ██╗███████╗");delay();
+    puts("██╔══██╗╚══██╔══╝████╗ ████║    ████╗ ████║██╔══██╗██╔════╝██║  ██║██║████╗  ██║██╔════╝");delay();
+    puts("███████║   ██║   ██╔████╔██║    ██╔████╔██║███████║██║     ███████║██║██╔██╗ ██║█████╗  ");delay();
+    puts("██╔══██║   ██║   ██║╚██╔╝██║    ██║╚██╔╝██║██╔══██║██║     ██╔══██║██║██║╚██╗██║██╔══╝  ");delay();
+    puts("██║  ██║   ██║   ██║ ╚═╝ ██║    ██║ ╚═╝ ██║██║  ██║╚██████╗██║  ██║██║██║ ╚████║███████╗");delay();
+    puts("╚═╝  ╚═╝   ╚═╝   ╚═╝     ╚═╝    ╚═╝     ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚═╝╚═╝  ╚═══╝╚══════╝");delay();
 }
 
 void Menu(){
     short unsigned opt;
     while(1){
         clearScreen();
-        // printASCII();
-        puts("==========================");
-        puts("||      ATM MACHINE     ||");
-        puts("==========================");
-        puts("||\t1. Login\t||");
-        puts("||\t\t\t||");
-        puts("||\t2. SignUp\t||");
-        puts("||\t\t\t||");
-        puts("||\t0. Keluar\t||");
-        puts("==========================");
+        printASCII();
+        for(int i = 0; i < 88; i++) printf("="); printf("\n");
+        printf("||");
+            for(int i = 0; i < 38; i++) printf(" ");
+            printf("MAIN MENU");
+            for(int i = 0; i < 37; i++) printf(" ");
+        printf("||\n");
+        for(int i = 0; i < 88; i++) printf("="); printf("\n");
+        printf("||");
+            for(int i = 0; i < 37; i++) printf(" ");
+            printf("1. Sign In");
+            for(int i = 0; i < 37; i++) printf(" ");
+        printf("||\n");
+        printf("||");
+            for(int i = 0; i < 84; i++) printf(" ");
+        printf("||\n");
+        printf("||");
+            for(int i = 0; i < 37; i++) printf(" ");
+            printf("2. Sign Up");
+            for(int i = 0; i < 37; i++) printf(" ");
+        printf("||\n");
+        printf("||");
+            for(int i = 0; i < 84; i++) printf(" ");
+        printf("||\n");
+        printf("||");
+            for(int i = 0; i < 37; i++) printf(" ");
+            printf("0. Keluar");
+            for(int i = 0; i < 38; i++) printf(" ");
+        printf("||\n");
+        for(int i = 0; i < 88; i++) printf("="); printf("\n");
         printf("Masukan pilihan anda : ");
         scanf("%hu",&opt);
         if(!opt) break;
