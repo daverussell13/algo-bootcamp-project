@@ -319,7 +319,7 @@ void writeNewUser(char* user,char* pass){
     User newUser;
     strcpy(newUser.username,user);
     strcpy(newUser.password,crypt(pass,"00"));
-    newUser.balance = 18000000000000000000ULL;
+    newUser.balance = 0;
     newUser.hlFront = -1;
     newUser.hlBack = -1;
     FILE* fp;
@@ -521,6 +521,7 @@ void tarikTunai(){
         if(money < 0) invalidInput(), flag = 1;
         else if(opt == 0) return;
         else {
+            clearScreen();
             if(!enoughBalance(money,Users->username)){
                 puts("Maaf saldo anda tidak cukup..");
                 flag = 1;
@@ -545,7 +546,12 @@ void setorTunai(){
         puts("(Nominal maksimal sebesar Rp. 1.000.000.000 per transaksi)");
         printf("Masukan nominal uang : ");
         scanf("%llu",&nominalSetor); clearBuff();
-        if(aboveLimit(nominalSetor,Users->username)){
+        if(nominalSetor == 0){
+            flag = 1;
+            continue;
+        }
+        else if(aboveLimit(nominalSetor,Users->username)){
+            clearScreen();
             puts("Saldo anda sudah melebihi batas yang telah ditentukan..");
             long long unsigned sisa = BLNC_LIMIT-getBalance(Users->username);
             printf("Saldo maksimal yang bisa anda setor sebesar : Rp %llu\n",sisa);
@@ -555,6 +561,7 @@ void setorTunai(){
         }
         else {
             if(nominalSetor > 1e9){
+                clearScreen();
                 puts("Nominal maksimal per transaksi sebesar Rp. 1.000.000.000!!!");
                 freezePrompt(); flag = 1;
             }
@@ -581,8 +588,13 @@ void transfer(){
         scanf("%s",rName);
         printf("Masukan nominal uang yang akan di transfer : ");
         scanf("%llu",&nominal); clearBuff();
+        if(!strcmp(rName,Users->username) || nominal == 0){
+            flag = 1;
+            continue;
+        }
         receiver = getUser(rName);
         if(receiver){
+            clearScreen();
             if(!enoughBalance(nominal,Users->username)){
                 puts("Saldo anda tidak mencukupi...");
                 freezePrompt(); flag = 1;
@@ -608,6 +620,7 @@ void transfer(){
             }
         }
         else {
+            clearScreen();
             puts("Username penerima salah / tidak terdaftar");
             puts("Pastikan anda memasukan nama username penerima dengan benar");
             freezePrompt(); flag = 1;
@@ -650,20 +663,22 @@ void atmMenu(){
     short unsigned opt;
     while(Users){
         clearScreen();
+        puts("====================== MENU =====================");
+        puts("||       1. Cek saldo                          ||");
+        puts("||                                             ||");
+        puts("||       2. Tarik tunai                        ||");
+        puts("||                                             ||");
+        puts("||       3. Setor tunai                        ||");
+        puts("||                                             ||");
+        puts("||       4. Transfer                           ||");
+        puts("||                                             ||");
+        puts("||       5. Riwayat transaksi (Baru -> Lama)   ||");
+        puts("||                                             ||");
+        puts("||       6. Riwayat transaksi (Lama -> Baru)   ||");
+        puts("||                                             ||");
+        puts("||       0. Logout                             ||");
+        puts("=================================================");
         printf("Selamat datang %s\n",Users->username);
-        puts("================= MENU ===============");
-        puts("||       1. Cek saldo               ||");
-        puts("||                                  ||");
-        puts("||       2. Tarik tunai             ||");
-        puts("||                                  ||");
-        puts("||       3. Setor tunai             ||");
-        puts("||                                  ||");
-        puts("||       4. Transfer                ||");
-        puts("||                                  ||");
-        puts("||       5. Riwayat transaksi       ||");
-        puts("||                                  ||");
-        puts("||       0. Logout                  ||");
-        puts("======================================");
         printf("Masukan pilihan anda : ");
         scanf("%hu",&opt);
         clearBuff();
