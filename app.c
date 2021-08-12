@@ -560,6 +560,7 @@ void setorTunai(){
             else flag = 1;
         }
         else {
+            clearScreen();
             if(nominalSetor > 1e9){
                 clearScreen();
                 puts("Nominal maksimal per transaksi sebesar Rp. 1.000.000.000!!!");
