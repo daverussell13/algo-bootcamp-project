@@ -285,7 +285,11 @@ void readData(char* fname){
             else {
                 int i = users.hlFront;
                 while(1){
-                    printf("%s %s %lld\n",users.historyList[i].time,users.historyList[i].transactionType,users.historyList[i].sisaSaldo);
+                    printf("%s %s %lld\n",
+                        users.historyList[i].time,
+                        users.historyList[i].transactionType,
+                        users.historyList[i].sisaSaldo
+                    );
                     if(i == users.hlBack) break;
                     i = (i+1)%QUEUE_LIMIT;
                 }
